@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test & Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+
+      - name: Verify code formatting
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "The following files are not formatted with gofmt:"
+            gofmt -l .
+            exit 1
+          fi
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run tests with race detector and coverage
+        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Enforce coverage threshold (>= 85%)
+        run: |
+          go tool cover -func=coverage.out | awk -v min=85.0 '
+            /total:/ {
+              cov = substr($3, 1, length($3)-1)
+              print "Total coverage: " cov "% (threshold: " min "%)"
+              if (cov + 0 < min) {
+                print "Coverage " cov "% is below threshold " min "%"
+                exit 1
+              }
+            }
+          '
