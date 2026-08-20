@@ -1,0 +1,195 @@
+{
+  "counts": { "catalog": 10, "lodgeCases": 13, "arrivalCases": 16 },
+  "catalog": [
+    {
+      "schemaUri": "https://cdevents.dev/0.6.0-draft/schema/build-started-event",
+      "lineage": [],
+      "schema": {
+        "$id": "https://cdevents.dev/0.6.0-draft/schema/build-started-event",
+        "type": "object",
+        "properties": {
+          "context": { "type": "object", "properties": { "type": { "enum": ["dev.cdevents.build.started.0.3.0"] } } },
+          "subject": { "type": "object", "properties": { "content": { "type": "object", "properties": {}, "additionalProperties": false } } }
+        }
+      }
+    },
+    {
+      "schemaUri": "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json",
+      "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event"],
+      "schema": {
+        "$id": "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json",
+        "type": "object",
+        "properties": {
+          "context": { "type": "object", "properties": { "type": { "const": "com.example-vendor.build.started.0.1.0" } } },
+          "subject": { "type": "object", "properties": { "content": {
+            "type": "object",
+            "properties": {
+              "applicationName": { "type": "string" },
+              "pipelineExecutionId": { "type": "string" },
+              "environment": { "enum": ["dev", "staging", "prod"] },
+              "analysisId": { "description": "usage description only" }
+            },
+            "required": ["applicationName", "pipelineExecutionId"],
+            "additionalProperties": false
+          } } }
+        }
+      }
+    },
+    {
+      "schemaUri": "https://schemas.example.com/com.example.build.started.0.1.0.json",
+      "lineage": [
+        "https://cdevents.dev/0.6.0-draft/schema/build-started-event",
+        "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json"
+      ],
+      "schema": {
+        "$id": "https://schemas.example.com/com.example.build.started.0.1.0.json",
+        "type": "object",
+        "properties": {
+          "context": { "type": "object", "properties": { "type": { "enum": ["com.example.build.started.0.1.0"] } } },
+          "subject": { "type": "object", "properties": { "content": {
+            "type": "object",
+            "properties": {
+              "applicationName": { "type": "string" },
+              "pipelineExecutionId": { "type": "string" },
+              "environment": { "description": "the customer's word; usage per lineage" },
+              "analysisId": { "description": "usage description only" },
+              "tenantId": { "type": "string" },
+              "changeOrderNumber": { "type": "string" }
+            },
+            "required": ["applicationName", "pipelineExecutionId", "environment", "tenantId"],
+            "additionalProperties": false
+          } } }
+        }
+      }
+    },
+    { "schemaUri": "https://schemas.example.com/com.d1.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.d1.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "f1": {} }, "additionalProperties": false } } } } } },
+    { "schemaUri": "https://schemas.example.com/com.d2.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example.com/com.d1.build.started.0.1.0.json"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.d2.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "f1": {}, "f2": {} }, "additionalProperties": false } } } } } },
+    { "schemaUri": "https://schemas.example.com/com.d3.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example.com/com.d1.build.started.0.1.0.json", "https://schemas.example.com/com.d2.build.started.0.1.0.json"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.d3.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "f1": {}, "f2": {}, "f3": {} }, "additionalProperties": false } } } } } },
+    { "schemaUri": "https://schemas.example.com/com.d4.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example.com/com.d1.build.started.0.1.0.json", "https://schemas.example.com/com.d2.build.started.0.1.0.json", "https://schemas.example.com/com.d3.build.started.0.1.0.json"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.d4.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "f1": {}, "f2": {}, "f3": {}, "f4": {} }, "additionalProperties": false } } } } } },
+    { "schemaUri": "https://schemas.example.com/com.d5.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example.com/com.d1.build.started.0.1.0.json", "https://schemas.example.com/com.d2.build.started.0.1.0.json", "https://schemas.example.com/com.d3.build.started.0.1.0.json", "https://schemas.example.com/com.d4.build.started.0.1.0.json"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.d5.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "f1": {}, "f2": {}, "f3": {}, "f4": {}, "f5": {} }, "additionalProperties": false } } } } } },
+    { "schemaUri": "https://schemas.example.com/com.d6.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example.com/com.d1.build.started.0.1.0.json", "https://schemas.example.com/com.d2.build.started.0.1.0.json", "https://schemas.example.com/com.d3.build.started.0.1.0.json", "https://schemas.example.com/com.d4.build.started.0.1.0.json", "https://schemas.example.com/com.d5.build.started.0.1.0.json"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.d6.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "f1": {}, "f2": {}, "f3": {}, "f4": {}, "f5": {}, "f6": {} }, "additionalProperties": false } } } } } },
+    { "schemaUri": "https://schemas.example.com/com.d7.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example.com/com.d1.build.started.0.1.0.json", "https://schemas.example.com/com.d2.build.started.0.1.0.json", "https://schemas.example.com/com.d3.build.started.0.1.0.json", "https://schemas.example.com/com.d4.build.started.0.1.0.json", "https://schemas.example.com/com.d5.build.started.0.1.0.json", "https://schemas.example.com/com.d6.build.started.0.1.0.json"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.d7.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "f1": {}, "f2": {}, "f3": {}, "f4": {}, "f5": {}, "f6": {}, "f7": {} }, "additionalProperties": false } } } } } }
+  ],
+  "lodgeCases": [
+    { "name": "idempotent-relodge", "doc": { "schemaUri": "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event"], "schema": { "$id": "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json", "type": "object", "properties": { "context": { "type": "object", "properties": { "type": { "const": "com.example-vendor.build.started.0.1.0" } } }, "subject": { "type": "object", "properties": { "content": { "type": "object", "properties": { "applicationName": { "type": "string" }, "pipelineExecutionId": { "type": "string" }, "environment": { "enum": ["dev", "staging", "prod"] }, "analysisId": { "description": "usage description only" } }, "required": ["applicationName", "pipelineExecutionId"], "additionalProperties": false } } } } } }, "expect": { "outcome": "lodged" }, "note": "byte-identical to the catalog's vendor envelope; idempotent no-op" },
+    { "name": "immutable-different-content", "doc": { "schemaUri": "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.example-vendor.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "applicationName": {}, "pipelineExecutionId": {}, "environment": {}, "analysisId": {}, "extra": {} }, "required": ["applicationName", "pipelineExecutionId"], "additionalProperties": false } } } } }}, "expect": { "outcome": "refused", "kind": "immutable" } },
+    { "name": "incomplete-child", "doc": { "schemaUri": "https://schemas.example.com/com.badco.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.badco.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "applicationName": {}, "pipelineExecutionId": {}, "environment": {} }, "required": ["applicationName", "pipelineExecutionId"], "additionalProperties": false } } } } }}, "expect": { "outcome": "refused", "kind": "incomplete" }, "note": "omits analysisId from the vendor's vocabulary" },
+    { "name": "relaxed-obligation", "doc": { "schemaUri": "https://schemas.example.com/com.badco2.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.badco2.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "applicationName": {}, "pipelineExecutionId": {}, "environment": {}, "analysisId": {} }, "required": ["applicationName"], "additionalProperties": false } } } } }}, "expect": { "outcome": "refused", "kind": "relaxed-obligation" }, "note": "drops the vendor's pipelineExecutionId requirement" },
+    { "name": "cross-subject", "doc": { "schemaUri": "https://schemas.example.com/com.badco.deploy.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.badco.deploy.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": {}, "additionalProperties": false } } } } }}, "expect": { "outcome": "refused", "kind": "cross-subject" } },
+    { "name": "root-not-sanctioned", "doc": { "schemaUri": "https://schemas.example.com/com.badco3.build.started.0.1.0.json", "lineage": [], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.badco3.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": {}, "additionalProperties": false } } } } }}, "expect": { "outcome": "refused", "kind": "root-not-sanctioned" }, "note": "derived name with an empty lineage" },
+    { "name": "lineage-disordered", "doc": { "schemaUri": "https://schemas.example.com/com.badco4.build.started.0.1.0.json", "lineage": ["https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json", "https://cdevents.dev/0.6.0-draft/schema/build-started-event"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.badco4.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "applicationName": {}, "pipelineExecutionId": {}, "environment": {}, "analysisId": {} }, "additionalProperties": false } } } } }}, "expect": { "outcome": "refused", "kind": "lineage-incoherent" }, "note": "parent (last entry) is ROOT; prefix [VENDOR] does not equal ROOT's empty lineage" },
+    { "name": "self-in-lineage", "doc": { "schemaUri": "https://schemas.example.com/com.badco5.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example.com/com.badco5.build.started.0.1.0.json"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.badco5.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": {}, "additionalProperties": false } } } } }}, "expect": { "outcome": "refused", "kind": "cycle" } },
+    { "name": "duplicate-entry", "doc": { "schemaUri": "https://schemas.example.com/com.badco6.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json", "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.badco6.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "applicationName": {}, "pipelineExecutionId": {}, "environment": {}, "analysisId": {} }, "additionalProperties": false } } } } }}, "expect": { "outcome": "refused", "kind": "duplicate-entry" } },
+    { "name": "depth-exceeded", "doc": { "schemaUri": "https://schemas.example.com/com.d8.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example.com/com.d1.build.started.0.1.0.json", "https://schemas.example.com/com.d2.build.started.0.1.0.json", "https://schemas.example.com/com.d3.build.started.0.1.0.json", "https://schemas.example.com/com.d4.build.started.0.1.0.json", "https://schemas.example.com/com.d5.build.started.0.1.0.json", "https://schemas.example.com/com.d6.build.started.0.1.0.json", "https://schemas.example.com/com.d7.build.started.0.1.0.json"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.d8.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "f1": {}, "f2": {}, "f3": {}, "f4": {}, "f5": {}, "f6": {}, "f7": {}, "f8": {} }, "additionalProperties": false } } } } }}, "expect": { "outcome": "refused", "kind": "depth-exceeded" }, "note": "eight entries; loud refusal, never truncation" },
+    { "name": "required-undeclared", "doc": { "schemaUri": "https://schemas.example.com/com.badco7.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.badco7.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "a": {} }, "required": ["a", "ghost"], "additionalProperties": false } } } } }}, "expect": { "outcome": "refused", "kind": "required-undeclared" } },
+    { "name": "not-closed", "doc": { "schemaUri": "https://schemas.example.com/com.badco8.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.badco8.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": { "a": {} }, "additionalProperties": true } } } } }}, "expect": { "outcome": "refused", "kind": "not-closed" } },
+    { "name": "bad-name-uppercase", "doc": { "schemaUri": "https://schemas.example.com/com.BadCo.build.started.0.1.0.json", "lineage": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event"], "schema": { "type": "object", "properties": { "context": { "properties": { "type": { "const": "com.BadCo.build.started.0.1.0" } } }, "subject": { "properties": { "content": { "properties": {}, "additionalProperties": false } } } } }}, "expect": { "outcome": "refused", "kind": "bad-name" } }
+  ],
+  "arrivalCases": [
+    {
+      "name": "valid-deep",
+      "event": { "context": { "id": "e1", "type": "com.example.build.started.0.1.0", "schemaUri": "https://schemas.example.com/com.example.build.started.0.1.0.json", "inherits": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json"], "timestamp": "2026-08-18T14:02:11Z" }, "subject": { "id": "build-4471", "content": { "applicationName": "payments-api", "pipelineExecutionId": "01J9K2M7QX", "environment": "pci", "analysisId": "an-88", "tenantId": "acme-financial", "changeOrderNumber": "CO-4471" } }, "customData": { "ns:com.example.platform": { "runner": "arm64-fleet-3" } }, "customDataContentType": "application/json" },
+      "expect": { "outcome": "resolved", "minted": [
+        { "schemaUri": "https://cdevents.dev/0.6.0-draft/schema/build-started-event", "type": "dev.cdevents.build.started.0.3.0", "content": {} },
+        { "schemaUri": "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json", "type": "com.example-vendor.build.started.0.1.0", "content": { "applicationName": "payments-api", "pipelineExecutionId": "01J9K2M7QX", "environment": "pci", "analysisId": "an-88" } },
+        { "schemaUri": "https://schemas.example.com/com.example.build.started.0.1.0.json", "type": "com.example.build.started.0.1.0", "content": { "applicationName": "payments-api", "pipelineExecutionId": "01J9K2M7QX", "environment": "pci", "analysisId": "an-88", "tenantId": "acme-financial", "changeOrderNumber": "CO-4471" } }
+      ], "customDataOnEveryMinted": true, "serveAt": [
+        { "uri": "https://cdevents.dev/0.6.0-draft/schema/build-started-event", "found": true },
+        { "uri": "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json", "found": true },
+        { "uri": "https://schemas.example.com/com.example.build.started.0.1.0.json", "found": true },
+        { "uri": "https://schemas.example.com/never-lodged.json", "found": false }
+      ] },
+      "note": "environment carries pci, outside the vendor's advisory enum; admitted"
+    },
+    {
+      "name": "values-not-governed",
+      "event": { "context": { "id": "e2", "type": "com.example.build.started.0.1.0", "inherits": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json"] }, "subject": { "id": "s2", "content": { "applicationName": 42, "pipelineExecutionId": { "deep": { "obj": true } }, "environment": [1, 2, 3], "tenantId": null } } },
+      "expect": { "outcome": "resolved", "minted": [
+        { "schemaUri": "https://cdevents.dev/0.6.0-draft/schema/build-started-event", "type": "dev.cdevents.build.started.0.3.0", "content": {} },
+        { "schemaUri": "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json", "type": "com.example-vendor.build.started.0.1.0", "content": { "applicationName": 42, "pipelineExecutionId": { "deep": { "obj": true } }, "environment": [1, 2, 3] } },
+        { "schemaUri": "https://schemas.example.com/com.example.build.started.0.1.0.json", "type": "com.example.build.started.0.1.0", "content": { "applicationName": 42, "pipelineExecutionId": { "deep": { "obj": true } }, "environment": [1, 2, 3], "tenantId": null } }
+      ] },
+      "note": "wrong 'types', out-of-enum, null: all admitted; a present null satisfies an obligation"
+    },
+    {
+      "name": "imposter-field",
+      "event": { "context": { "id": "e3", "type": "com.example.build.started.0.1.0", "inherits": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json"] }, "subject": { "id": "s3", "content": { "applicationName": "a", "pipelineExecutionId": "p", "environment": "pci", "tenantId": "t", "buildRunner": "arm64" } } },
+      "expect": { "outcome": "refused", "refusal": { "kind": "undeclared-field", "field": "buildRunner", "layer": "" } }
+    },
+    {
+      "name": "many-faults-vocabulary-first",
+      "event": { "context": { "id": "e4", "type": "com.example.build.started.0.1.0", "inherits": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json"] }, "subject": { "id": "s4", "content": { "applicationName": "a", "pipelineExecutionId": "p", "environment": "pci", "zebra": 1, "buildRunner": "x" } } },
+      "expect": { "outcome": "refused", "refusal": { "kind": "undeclared-field", "field": "buildRunner", "layer": "" } },
+      "note": "tenantId is also missing, but vocabulary is checked first; buildRunner precedes zebra alphabetically"
+    },
+    {
+      "name": "missing-required-leaf",
+      "event": { "context": { "id": "e5", "type": "com.example.build.started.0.1.0", "inherits": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json"] }, "subject": { "id": "s5", "content": { "applicationName": "a", "pipelineExecutionId": "p", "environment": "pci" } } },
+      "expect": { "outcome": "refused", "refusal": { "kind": "missing-required", "field": "tenantId", "layer": "https://schemas.example.com/com.example.build.started.0.1.0.json" } }
+    },
+    {
+      "name": "missing-required-mid-layer",
+      "event": { "context": { "id": "e6", "type": "com.example.build.started.0.1.0", "inherits": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json"] }, "subject": { "id": "s6", "content": { "pipelineExecutionId": "p", "environment": "pci", "tenantId": "t" } } },
+      "expect": { "outcome": "refused", "refusal": { "kind": "missing-required", "field": "applicationName", "layer": "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json" } },
+      "note": "layers are checked sanctioned-first; the vendor is the shallowest layer requiring applicationName"
+    },
+    {
+      "name": "coinage-rides",
+      "event": { "context": { "id": "e7", "type": "com.unlodged.build.started.0.1.0", "inherits": "this is not even an array" }, "subject": { "id": "s7", "content": { "anything": "goes", "rogue": 1 } } },
+      "expect": { "outcome": "coinage" },
+      "note": "unknown type: nothing is judged, not even the malformed inherits"
+    },
+    {
+      "name": "lineage-partial",
+      "event": { "context": { "id": "e8", "type": "com.example.build.started.0.1.0", "inherits": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event"] }, "subject": { "id": "s8", "content": { "applicationName": "a", "pipelineExecutionId": "p", "environment": "e", "tenantId": "t" } } },
+      "expect": { "outcome": "refused", "refusal": { "kind": "lineage-mismatch", "field": "", "layer": "" } }
+    },
+    {
+      "name": "lineage-disordered",
+      "event": { "context": { "id": "e9", "type": "com.example.build.started.0.1.0", "inherits": ["https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json", "https://cdevents.dev/0.6.0-draft/schema/build-started-event"] }, "subject": { "id": "s9", "content": { "applicationName": "a", "pipelineExecutionId": "p", "environment": "e", "tenantId": "t" } } },
+      "expect": { "outcome": "refused", "refusal": { "kind": "lineage-mismatch", "field": "", "layer": "" } }
+    },
+    {
+      "name": "lineage-includes-self",
+      "event": { "context": { "id": "e10", "type": "com.example.build.started.0.1.0", "inherits": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json", "https://schemas.example.com/com.example.build.started.0.1.0.json"] }, "subject": { "id": "s10", "content": { "applicationName": "a", "pipelineExecutionId": "p", "environment": "e", "tenantId": "t" } } },
+      "expect": { "outcome": "refused", "refusal": { "kind": "lineage-mismatch", "field": "", "layer": "" } }
+    },
+    {
+      "name": "lineage-absent-on-derived",
+      "event": { "context": { "id": "e11", "type": "com.example.build.started.0.1.0" }, "subject": { "id": "s11", "content": { "applicationName": "a", "pipelineExecutionId": "p", "environment": "e", "tenantId": "t" } } },
+      "expect": { "outcome": "refused", "refusal": { "kind": "lineage-mismatch", "field": "", "layer": "" } }
+    },
+    {
+      "name": "lineage-malformed-on-derived",
+      "event": { "context": { "id": "e12", "type": "com.example.build.started.0.1.0", "inherits": "not-an-array" }, "subject": { "id": "s12", "content": { "applicationName": "a", "pipelineExecutionId": "p", "environment": "e", "tenantId": "t" } } },
+      "expect": { "outcome": "refused", "refusal": { "kind": "lineage-mismatch", "field": "", "layer": "" } }
+    },
+    {
+      "name": "sanctioned-clean",
+      "event": { "context": { "id": "e13", "type": "dev.cdevents.build.started.0.3.0" }, "subject": { "id": "s13", "content": {} } },
+      "expect": { "outcome": "resolved", "minted": [ { "schemaUri": "https://cdevents.dev/0.6.0-draft/schema/build-started-event", "type": "dev.cdevents.build.started.0.3.0", "content": {} } ] }
+    },
+    {
+      "name": "sanctioned-with-inherits",
+      "event": { "context": { "id": "e14", "type": "dev.cdevents.build.started.0.3.0", "inherits": [] }, "subject": { "id": "s14", "content": {} } },
+      "expect": { "outcome": "refused", "refusal": { "kind": "lineage-mismatch", "field": "", "layer": "" } },
+      "note": "a sanctioned event must not carry inherits, even empty"
+    },
+    {
+      "name": "sanctioned-imposter",
+      "event": { "context": { "id": "e15", "type": "dev.cdevents.build.started.0.3.0" }, "subject": { "id": "s15", "content": { "rogue": 1 } } },
+      "expect": { "outcome": "refused", "refusal": { "kind": "undeclared-field", "field": "rogue", "layer": "" } },
+      "note": "closure holds for the commons too"
+    },
+    {
+      "name": "commons-rides-minimal",
+      "event": { "context": { "id": "e16", "type": "com.example.build.started.0.1.0", "inherits": ["https://cdevents.dev/0.6.0-draft/schema/build-started-event", "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json"] }, "subject": { "id": "s16", "content": { "applicationName": "a", "pipelineExecutionId": "p", "environment": "pci", "tenantId": "t" } }, "customData": { "unNamespaced": { "deep": [1, 2] } } },
+      "expect": { "outcome": "resolved", "minted": [
+        { "schemaUri": "https://cdevents.dev/0.6.0-draft/schema/build-started-event", "type": "dev.cdevents.build.started.0.3.0", "content": {} },
+        { "schemaUri": "https://schemas.example-vendor.com/com.example-vendor.build.started.0.1.0.json", "type": "com.example-vendor.build.started.0.1.0", "content": { "applicationName": "a", "pipelineExecutionId": "p", "environment": "pci" } },
+        { "schemaUri": "https://schemas.example.com/com.example.build.started.0.1.0.json", "type": "com.example.build.started.0.1.0", "content": { "applicationName": "a", "pipelineExecutionId": "p", "environment": "pci", "tenantId": "t" } }
+      ], "customDataOnEveryMinted": true },
+      "note": "optional fields may be absent; un-namespaced customData is carried whole and never judged"
+    }
+  ]
+}
