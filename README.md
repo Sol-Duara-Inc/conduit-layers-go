@@ -12,6 +12,22 @@ carried whole. An unknown type is a coinage and rides untouched. A bad
 utterance earns a typed refusal, charged to the emitter; a broken catalog
 record is a fault, never charged to the emitter.
 
+## Lodging
+
+A type name holds exactly one schema. The first lodging of a name takes it; a
+second schema declaring that same name is refused as `type-already-lodged`, and
+the refusal names the schema already held. An event carries its type name, not
+its schema URI, and its own layer is resolved by name, so a name with two
+schemas would make admission depend on which was lodged last — the same event
+resolved under one and refused under the other. The version is part of the
+name: `com.acme.build.finished.1.0.0` and `com.acme.build.finished.1.1.0` are
+different names and both lodge, so ordinary evolution is untouched; only a
+second schema for the same version collides. Replacing a lodged schema is an
+administrator's act — remove it, flush the cache, lodge the replacement — never
+something a second lodging performs. Re-lodging the same schema URI is governed
+by immutability as before: identical content is idempotent, different content
+is refused.
+
 ## Install
 
 ```

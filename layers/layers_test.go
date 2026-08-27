@@ -597,3 +597,205 @@ func TestServeAtMiss(t *testing.T) {
 		t.Fatal("empty resolution served an object")
 	}
 }
+
+// --- one schema per type name ---
+
+// The sanctioned root the acme schemas below derive from.
+const oneNameRootEnvelope = `{
+  "schemaUri": "https://cdevents.test/build-finished",
+  "lineage": [],
+  "schema": {"properties": {
+    "context": {"properties": {"type": {"const": "dev.cdevents.build.finished.1.0.0"}}},
+    "subject": {"properties": {"content": {"properties": {"buildId": {}}, "required": ["buildId"], "additionalProperties": false}}}
+  }}
+}`
+
+// Two schemas for one type name, differing only in URI and one declared
+// field. Without the rule, which one ByType answers depends on lodge order.
+const (
+	acmeV1Envelope = `{
+  "schemaUri": "https://schemas.acme-corp.example/build-finished/v1.json",
+  "lineage": ["https://cdevents.test/build-finished"],
+  "schema": {"properties": {
+    "context": {"properties": {"type": {"const": "com.acme.build.finished.1.0.0"}}},
+    "subject": {"properties": {"content": {"properties": {"buildId": {}, "buildResult": {}, "buildDuration": {}}, "required": ["buildId"], "additionalProperties": false}}}
+  }}
+}`
+
+	acmeV2Envelope = `{
+  "schemaUri": "https://registry.acme.example/v2",
+  "lineage": ["https://cdevents.test/build-finished"],
+  "schema": {"properties": {
+    "context": {"properties": {"type": {"const": "com.acme.build.finished.1.0.0"}}},
+    "subject": {"properties": {"content": {"properties": {"buildId": {}, "buildResult": {}, "buildDuration": {}, "buildRegion": {}}, "required": ["buildId"], "additionalProperties": false}}}
+  }}
+}`
+
+	// A different name: the version is part of the name, so this is ordinary
+	// evolution and not a collision.
+	acmeNextVersionEnvelope = `{
+  "schemaUri": "https://schemas.acme-corp.example/build-finished/v1-1.json",
+  "lineage": ["https://cdevents.test/build-finished"],
+  "schema": {"properties": {
+    "context": {"properties": {"type": {"const": "com.acme.build.finished.1.1.0"}}},
+    "subject": {"properties": {"content": {"properties": {"buildId": {}, "buildResult": {}, "buildDuration": {}, "buildRegion": {}}, "required": ["buildId"], "additionalProperties": false}}}
+  }}
+}`
+)
+
+const (
+	acmeTypeName = "com.acme.build.finished.1.0.0"
+	acmeV1URI    = "https://schemas.acme-corp.example/build-finished/v1.json"
+	acmeV2URI    = "https://registry.acme.example/v2"
+)
+
+// mustLodge lodges an envelope that is expected to be admitted.
+func mustLodge(t *testing.T, cat *MemoryCatalog, envelope string) *Layer {
+	t.Helper()
+	layer, ref := cat.Lodge([]byte(envelope))
+	if ref != nil {
+		t.Fatalf("expected the envelope to lodge, got refusal %s: %s", ref.Kind, ref.Evidence)
+	}
+	if layer == nil {
+		t.Fatal("lodged but no layer returned")
+	}
+	return layer
+}
+
+func TestLodge_TypeNameHoldsExactlyOneSchema(t *testing.T) {
+	cat := NewMemoryCatalog()
+	mustLodge(t, cat, oneNameRootEnvelope)
+	first := mustLodge(t, cat, acmeV1Envelope)
+	if first.SchemaURI != acmeV1URI || first.TypeName != acmeTypeName {
+		t.Fatalf("first lodging is not the expected layer: %+v", first)
+	}
+
+	before := snapshot(t, cat)
+	layer, ref := cat.Lodge([]byte(acmeV2Envelope))
+
+	t.Run("the-second-schema-is-refused-by-name", func(t *testing.T) {
+		if ref == nil {
+			t.Fatalf("a second schema for %q was admitted (layer %+v)", acmeTypeName, layer)
+		}
+		if ref.Kind != "type-already-lodged" {
+			t.Fatalf("refusal kind = %q, want %q (evidence: %s)", ref.Kind, "type-already-lodged", ref.Evidence)
+		}
+		if layer != nil {
+			t.Fatal("a refused lodge also returned a layer")
+		}
+	})
+
+	t.Run("the-evidence-names-the-collision", func(t *testing.T) {
+		if ref == nil {
+			t.Skip("no refusal to inspect")
+		}
+		if !strings.Contains(ref.Evidence, acmeTypeName) {
+			t.Errorf("evidence does not name the colliding type %q: %s", acmeTypeName, ref.Evidence)
+		}
+		if !strings.Contains(ref.Evidence, acmeV1URI) {
+			t.Errorf("evidence does not name the schema already held (%s): %s", acmeV1URI, ref.Evidence)
+		}
+	})
+
+	t.Run("the-evidence-carries-the-remedy", func(t *testing.T) {
+		if ref == nil {
+			t.Skip("no refusal to inspect")
+		}
+		// Substrings, so the wording can improve without breaking the pin.
+		for _, want := range []string{
+			"A type name holds exactly one schema",
+			"publish a new version",
+			"remove the lodged schema",
+			"flush the cache",
+		} {
+			if !strings.Contains(ref.Evidence, want) {
+				t.Errorf("evidence does not carry the remedy phrase %q: %s", want, ref.Evidence)
+			}
+		}
+	})
+
+	t.Run("nothing-is-stored", func(t *testing.T) {
+		if after := snapshot(t, cat); after != before {
+			t.Error("a refused second schema changed the catalog")
+		}
+		got, ok := cat.ByType(acmeTypeName)
+		if !ok {
+			t.Fatalf("ByType(%q) no longer answers after the refusal", acmeTypeName)
+		}
+		if got != first || got.SchemaURI != acmeV1URI {
+			t.Errorf("ByType(%q) answers %q, want the first lodging %q", acmeTypeName, got.SchemaURI, acmeV1URI)
+		}
+		if l, ok := cat.BySchemaURI(acmeV2URI); ok || l != nil {
+			t.Errorf("BySchemaURI(%q) found the refused schema", acmeV2URI)
+		}
+	})
+}
+
+func TestLodge_SameSchemaURIRelodgeIsUnaffected(t *testing.T) {
+	cat := NewMemoryCatalog()
+	mustLodge(t, cat, oneNameRootEnvelope)
+	first := mustLodge(t, cat, acmeV1Envelope)
+
+	t.Run("identical-bytes-are-idempotent", func(t *testing.T) {
+		before := snapshot(t, cat)
+		again, ref := cat.Lodge([]byte(acmeV1Envelope))
+		if ref != nil {
+			t.Fatalf("re-lodging the same URI with identical bytes was refused: %s: %s", ref.Kind, ref.Evidence)
+		}
+		if again != first {
+			t.Error("an idempotent re-lodge did not return the layer already held")
+		}
+		if after := snapshot(t, cat); after != before {
+			t.Error("an idempotent re-lodge changed the catalog")
+		}
+	})
+
+	t.Run("different-bytes-are-immutable-not-type-already-lodged", func(t *testing.T) {
+		changed := strings.Replace(acmeV1Envelope, `"buildDuration": {}`, `"buildDuration": {}, "buildRegion": {}`, 1)
+		if changed == acmeV1Envelope {
+			t.Fatal("test setup: the envelope was not altered")
+		}
+		before := snapshot(t, cat)
+		layer, ref := cat.Lodge([]byte(changed))
+		if ref == nil {
+			t.Fatalf("re-lodging the same URI with different content was admitted (layer %+v)", layer)
+		}
+		if ref.Kind != "immutable" {
+			t.Fatalf("refusal kind = %q, want %q — the same-URI path is still governed by immutability (evidence: %s)", ref.Kind, "immutable", ref.Evidence)
+		}
+		if after := snapshot(t, cat); after != before {
+			t.Error("a refused re-lodge changed the catalog")
+		}
+	})
+}
+
+func TestLodge_VersionEvolutionIsUnaffected(t *testing.T) {
+	cat := NewMemoryCatalog()
+	mustLodge(t, cat, oneNameRootEnvelope)
+	v100 := mustLodge(t, cat, acmeV1Envelope)
+	v110 := mustLodge(t, cat, acmeNextVersionEnvelope)
+
+	if v100.TypeName == v110.TypeName {
+		t.Fatal("test setup: the two versions share a type name")
+	}
+	if v100.SchemaURI == v110.SchemaURI {
+		t.Fatal("test setup: the two versions share a schema URI")
+	}
+
+	for _, tc := range []struct {
+		typeName string
+		want     *Layer
+	}{
+		{"com.acme.build.finished.1.0.0", v100},
+		{"com.acme.build.finished.1.1.0", v110},
+	} {
+		got, ok := cat.ByType(tc.typeName)
+		if !ok {
+			t.Errorf("ByType(%q) does not answer", tc.typeName)
+			continue
+		}
+		if got != tc.want {
+			t.Errorf("ByType(%q) answers %q, want %q", tc.typeName, got.SchemaURI, tc.want.SchemaURI)
+		}
+	}
+}
