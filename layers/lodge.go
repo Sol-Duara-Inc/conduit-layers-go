@@ -116,8 +116,8 @@ func lodgeRefusal(kind, format string, args ...any) *LodgeRefusal {
 	return &LodgeRefusal{Kind: kind, Evidence: fmt.Sprintf(format, args...)}
 }
 
-// Lodge records one type in the catalog. Rules L1-L13 are checked in order;
-// the first violation wins.
+// Lodge records one type in the catalog. Rules L1-L13 are checked in order,
+// then the one-schema-per-type-name rule; the first violation wins.
 func (c *MemoryCatalog) Lodge(envelope []byte) (*Layer, *LodgeRefusal) {
 	// L1: envelope and schema parse; type name extractable.
 	var env envelopeDoc
@@ -242,6 +242,21 @@ func (c *MemoryCatalog) Lodge(envelope []byte) (*Layer, *LodgeRefusal) {
 		return nil, lodgeRefusal("immutable", "%q is already lodged with different content", schemaURI)
 	}
 
+	// One schema per type name. Past L13 this schemaUri is new to the catalog
+	// — every re-lodging of a URI already held returned above — so a type name
+	// already in the by-type index is held by a different schema, and this
+	// envelope is a second schema for a name that admits only one. It is
+	// refused by name: an event carries its type name, not its schema URI, and
+	// Decompress resolves the event's own layer through ByType, so a name with
+	// two schemas would make admission depend on which was lodged last. The
+	// version is part of the name, so ordinary evolution is untouched — only a
+	// second schema for the same version collides.
+	if held, ok := c.byType[typeName]; ok {
+		return nil, lodgeRefusal("type-already-lodged",
+			"type %q already has a schema (%s). A type name holds exactly one schema: publish a new version, or have an administrator remove the lodged schema, flush the cache, and lodge the replacement.",
+			typeName, held.SchemaURI)
+	}
+
 	layer := &Layer{
 		SchemaURI: schemaURI,
 		TypeName:  typeName,
@@ -254,8 +269,9 @@ func (c *MemoryCatalog) Lodge(envelope []byte) (*Layer, *LodgeRefusal) {
 		Lineage:   lineage,
 	}
 	c.bySchemaURI[schemaURI] = layer
-	// The rules do not forbid two schemaUris declaring the same type name;
-	// the by-type index simply records the most recent lodging.
+	// The by-type index is a bijection, not a most-recent record: the check
+	// above refused any second schema for this name, so this write never
+	// displaces another schema's layer.
 	c.byType[typeName] = layer
 	c.envelopes[schemaURI] = append([]byte(nil), envelope...)
 	return layer, nil
