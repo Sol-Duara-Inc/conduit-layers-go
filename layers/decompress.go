@@ -141,9 +141,9 @@ func Decompress(a *Arrival, c Catalog) *Outcome {
 	}
 
 	if len(own.Lineage) == 0 {
-		// A2: a sanctioned event must not carry inherits, even empty.
+		// A2: a root event must not carry inherits, even empty.
 		if a.InheritsPresent {
-			return refusedOutcome("lineage-mismatch", "", "", "sanctioned type %q must not carry context.inherits", a.Type)
+			return refusedOutcome("lineage-mismatch", "", "", "root type %q must not carry context.inherits", a.Type)
 		}
 	} else {
 		// A3: a derived event's inherits must be present, well-formed, and

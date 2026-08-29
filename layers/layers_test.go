@@ -492,6 +492,7 @@ func TestLodgeRefusals(t *testing.T) {
 		{"name-subject-not-lower", `{"schemaUri":"https://example.test/x","lineage":[],"schema":{"properties":{"context":{"properties":{"type":{"const":"dev.cdevents.b1.c.0.1.0"}}},"subject":{"properties":{"content":{"properties":{},"additionalProperties":false}}}}}}`, "bad-name"},
 		{"closure-absent", `{"schemaUri":"https://example.test/x","lineage":[],"schema":{"properties":{"context":{"properties":{"type":{"const":"dev.cdevents.b.c.0.1.0"}}},"subject":{"properties":{"content":{"properties":{}}}}}}}`, "not-closed"},
 		{"parent-missing", `{"schemaUri":"https://example.test/x","lineage":["https://example.test/never"],"schema":{"properties":{"context":{"properties":{"type":{"const":"com.x.b.c.0.1.0"}}},"subject":{"properties":{"content":{"properties":{},"additionalProperties":false}}}}}}`, "lineage-incoherent"},
+		{"sanctioned-has-lineage", `{"schemaUri":"https://example.test/x","lineage":["https://example.test/parent"],"schema":{"properties":{"context":{"properties":{"type":{"const":"dev.cdevents.b.c.0.1.0"}}},"subject":{"properties":{"content":{"properties":{},"additionalProperties":false}}}}}}`, "sanctioned-has-lineage"},
 	}
 	for _, tc := range cases {
 		tc := tc
@@ -797,5 +798,186 @@ func TestLodge_VersionEvolutionIsUnaffected(t *testing.T) {
 		if got != tc.want {
 			t.Errorf("ByType(%q) answers %q, want %q", tc.typeName, got.SchemaURI, tc.want.SchemaURI)
 		}
+	}
+}
+
+const opsmxHiddenBaseEnvelope = `{
+  "schemaUri": "https://schemas.opsmx.com/booking-started/v1.json",
+  "lineage": [],
+  "schema": {"properties": {
+    "context": {"properties": {"type": {"const": "com.opsmx.booking.started.0.1.0"}}},
+    "subject": {"properties": {"content": {"properties": {"bookingId": {}, "venue": {}}, "required": ["bookingId"], "additionalProperties": false}}}
+  }}
+}`
+
+func TestLodgeHiddenBaseRoot(t *testing.T) {
+	cat := NewMemoryCatalog()
+	layer, ref := cat.Lodge([]byte(opsmxHiddenBaseEnvelope))
+	if ref != nil {
+		t.Fatalf("expected hidden-base root to lodge, got refusal %s: %s", ref.Kind, ref.Evidence)
+	}
+	if layer == nil {
+		t.Fatal("lodged but returned no layer")
+	}
+	if layer.Namespace != "com.opsmx" ||
+		layer.Subject != "booking" ||
+		layer.Predicate != "started" ||
+		layer.Version != "0.1.0" ||
+		layer.TypeName != "com.opsmx.booking.started.0.1.0" ||
+		layer.SchemaURI != "https://schemas.opsmx.com/booking-started/v1.json" {
+		t.Fatalf("unexpected layer identity: %+v", layer)
+	}
+	if len(layer.Lineage) != 0 {
+		t.Fatalf("hidden-base root must have empty lineage, got: %v", layer.Lineage)
+	}
+	if got, ok := cat.ByType("com.opsmx.booking.started.0.1.0"); !ok || got != layer {
+		t.Fatalf("ByType did not return the lodged layer: ok=%v, got=%+v", ok, got)
+	}
+	if got, ok := cat.BySchemaURI("https://schemas.opsmx.com/booking-started/v1.json"); !ok || got != layer {
+		t.Fatalf("BySchemaURI did not return the lodged layer: ok=%v, got=%+v", ok, got)
+	}
+}
+
+func TestLodgeSanctionedRootUnchanged(t *testing.T) {
+	cat := NewMemoryCatalog()
+	layer, ref := cat.Lodge([]byte(rootEnvelope))
+	if ref != nil {
+		t.Fatalf("expected sanctioned root to lodge, got refusal %s: %s", ref.Kind, ref.Evidence)
+	}
+	if layer == nil {
+		t.Fatal("lodged but returned no layer")
+	}
+	if layer.Namespace != "dev.cdevents" ||
+		layer.Subject != "build" ||
+		layer.Predicate != "started" ||
+		layer.Version != "0.1.0" ||
+		layer.TypeName != "dev.cdevents.build.started.0.1.0" {
+		t.Fatalf("unexpected sanctioned layer identity: %+v", layer)
+	}
+	if len(layer.Lineage) != 0 {
+		t.Fatalf("sanctioned root must have empty lineage, got: %v", layer.Lineage)
+	}
+}
+
+func TestLodgeDerivedStillNeedsItsParents(t *testing.T) {
+	cat := NewMemoryCatalog()
+	derivedWithMissingParent := `{
+  "schemaUri": "https://schemas.opsmx.com/prod-booking-started/v1.json",
+  "lineage": ["https://schemas.opsmx.com/booking-started/never-lodged.json"],
+  "schema": {"properties": {
+    "context": {"properties": {"type": {"const": "com.opsmx.booking.started.0.1.0"}}},
+    "subject": {"properties": {"content": {"properties": {}, "additionalProperties": false}}}
+  }}
+}`
+	layer, ref := cat.Lodge([]byte(derivedWithMissingParent))
+	if ref == nil {
+		t.Fatalf("expected derived lodging with unlodged parent to be refused, got layer %+v", layer)
+	}
+	if ref.Kind != "lineage-incoherent" {
+		t.Fatalf("refusal kind = %q, want %q (evidence: %s)", ref.Kind, "lineage-incoherent", ref.Evidence)
+	}
+	if ref.Evidence == "" {
+		t.Fatal("refusal evidence is empty")
+	}
+}
+
+func TestDecompressHiddenBaseArrival(t *testing.T) {
+	cat := NewMemoryCatalog()
+	mustLodge(t, cat, opsmxHiddenBaseEnvelope)
+
+	t.Run("arrival-without-inherits-decompresses", func(t *testing.T) {
+		arrivalJSON := `{
+  "context": {
+    "id": "ev-hb-1",
+    "type": "com.opsmx.booking.started.0.1.0",
+    "timestamp": "2026-08-29T16:00:00Z"
+  },
+  "subject": {
+    "id": "sub-1",
+    "content": {
+      "bookingId": "bk-99",
+      "venue": "theater-3"
+    }
+  },
+  "customData": {"tenant": "acme"},
+  "customDataContentType": "application/json"
+}`
+		a, err := ParseArrival([]byte(arrivalJSON))
+		if err != nil {
+			t.Fatalf("ParseArrival: %v", err)
+		}
+		out := Decompress(a, cat)
+		if out.Kind != "resolved" {
+			t.Fatalf("outcome = %q, want resolved (refusal: %+v, fault: %s)", out.Kind, out.Refusal, out.Fault)
+		}
+		if out.Resolution == nil || len(out.Resolution.Minted) != 1 {
+			t.Fatalf("want 1 minted object, got: %+v", out.Resolution)
+		}
+		minted := out.Resolution.Minted[0]
+		if minted.SchemaURI != "https://schemas.opsmx.com/booking-started/v1.json" ||
+			minted.TypeName != "com.opsmx.booking.started.0.1.0" {
+			t.Fatalf("minted layer mismatch: %+v", minted)
+		}
+		if minted.Content["bookingId"] != "bk-99" || minted.Content["venue"] != "theater-3" {
+			t.Fatalf("minted content mismatch: %+v", minted.Content)
+		}
+		m, ok := out.Resolution.ServeAt("https://schemas.opsmx.com/booking-started/v1.json")
+		if !ok || m != &out.Resolution.Minted[0] {
+			t.Fatalf("ServeAt did not return the minted object: ok=%v, m=%+v", ok, m)
+		}
+	})
+
+	t.Run("arrival-carrying-inherits-is-refused", func(t *testing.T) {
+		arrivalWithInherits := `{
+  "context": {
+    "id": "ev-hb-2",
+    "type": "com.opsmx.booking.started.0.1.0",
+    "inherits": ["https://schemas.opsmx.com/something.json"]
+  },
+  "subject": {
+    "id": "sub-2",
+    "content": {
+      "bookingId": "bk-99"
+    }
+  }
+}`
+		a, err := ParseArrival([]byte(arrivalWithInherits))
+		if err != nil {
+			t.Fatalf("ParseArrival: %v", err)
+		}
+		out := Decompress(a, cat)
+		if out.Kind != "refused" {
+			t.Fatalf("outcome = %q, want refused", out.Kind)
+		}
+		if out.Refusal == nil || out.Refusal.Kind != "lineage-mismatch" {
+			t.Fatalf("refusal = %+v, want kind lineage-mismatch", out.Refusal)
+		}
+	})
+}
+
+func TestOneSchemaPerTypeNameStillHolds(t *testing.T) {
+	cat := NewMemoryCatalog()
+	mustLodge(t, cat, opsmxHiddenBaseEnvelope)
+
+	secondOpsmxEnvelope := `{
+  "schemaUri": "https://registry.opsmx.example/v2/booking.json",
+  "lineage": [],
+  "schema": {"properties": {
+    "context": {"properties": {"type": {"const": "com.opsmx.booking.started.0.1.0"}}},
+    "subject": {"properties": {"content": {"properties": {"bookingId": {}, "seat": {}}, "required": ["bookingId"], "additionalProperties": false}}}
+  }}
+}`
+	layer, ref := cat.Lodge([]byte(secondOpsmxEnvelope))
+	if ref == nil {
+		t.Fatalf("expected second schema for same type name to be refused, got layer %+v", layer)
+	}
+	if ref.Kind != "type-already-lodged" {
+		t.Fatalf("refusal kind = %q, want %q (evidence: %s)", ref.Kind, "type-already-lodged", ref.Evidence)
+	}
+	if !strings.Contains(ref.Evidence, "com.opsmx.booking.started.0.1.0") {
+		t.Errorf("evidence does not name colliding type: %s", ref.Evidence)
+	}
+	if !strings.Contains(ref.Evidence, "https://schemas.opsmx.com/booking-started/v1.json") {
+		t.Errorf("evidence does not name held schema: %s", ref.Evidence)
 	}
 }
