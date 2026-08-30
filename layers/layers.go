@@ -20,7 +20,7 @@ type Layer struct {
 	Version   string
 	Fields    map[string]json.RawMessage // name -> opaque description; never interpreted
 	Required  []string                   // sorted
-	Lineage   []string                   // ordered ancestor schema URIs; empty = sanctioned
+	Lineage   []string                   // ordered ancestor schema URIs; empty = root
 }
 
 // Catalog is the read seam Decompress resolves against.

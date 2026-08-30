@@ -166,10 +166,11 @@ func (c *MemoryCatalog) Lodge(envelope []byte) (*Layer, *LodgeRefusal) {
 		}
 	}
 
-	// L5: empty lineage iff sanctioned name.
+	// L5: empty lineage means a root (sanctioned or hidden-base). Sanctioned
+	// names cannot derive.
 	lineage := append([]string(nil), env.Lineage...)
-	if pn.sanctioned() != (len(lineage) == 0) {
-		return nil, lodgeRefusal("root-not-sanctioned", "type %q: a sanctioned name must have an empty lineage and a derived name a non-empty one (lineage has %d entries)", typeName, len(lineage))
+	if pn.sanctioned() && len(lineage) > 0 {
+		return nil, lodgeRefusal("sanctioned-has-lineage", "sanctioned type %q must have an empty lineage (got %d entries)", typeName, len(lineage))
 	}
 
 	// L6: no entry equals schemaUri.

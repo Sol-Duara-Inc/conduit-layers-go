@@ -6,9 +6,9 @@ vocabularies of every type in its lineage at once, its ancestry stated in
 by names and obligations only — the set of fields a schema declares and which
 of them are required; every other schema keyword is advisory and never
 enforced. Decompression turns one arriving event into one minted object per
-lineage layer, sanctioned type first, the event's own type last: content
-restricted to the fields that layer declares, values untouched, `customData`
-carried whole. An unknown type is a coinage and rides untouched. A bad
+lineage layer, root first (sanctioned or hidden-base), the event's own type
+last: content restricted to the fields that layer declares, values untouched,
+`customData` carried whole. An unknown type is a coinage and rides untouched. A bad
 utterance earns a typed refusal, charged to the emitter; a broken catalog
 record is a fault, never charged to the emitter.
 
