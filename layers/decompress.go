@@ -95,8 +95,8 @@ type Minted struct {
 	CustomDataContentType string
 }
 
-// Resolution is a successful decompression: every layer, sanctioned first,
-// own type last.
+// Resolution is a successful decompression: every layer, root first
+// (sanctioned or hidden-base), own type last.
 type Resolution struct {
 	Minted []Minted
 }
@@ -131,8 +131,8 @@ func refusedOutcome(kind, field, layer, format string, args ...any) *Outcome {
 }
 
 // Decompress applies rules A1-A10 in order and, on success, mints one object
-// per lineage layer, sanctioned first, the event's own type last. Arrivals
-// never mutate the catalog.
+// per lineage layer, root first (sanctioned or hidden-base), the event's own
+// type last. Arrivals never mutate the catalog.
 func Decompress(a *Arrival, c Catalog) *Outcome {
 	// A1: an unlodged type is a coinage; nothing else is examined.
 	own, ok := c.ByType(a.Type)
@@ -182,7 +182,7 @@ func Decompress(a *Arrival, c Catalog) *Outcome {
 	}
 	chain = append(chain, own)
 
-	// A5: every layer's required names must be present, checked sanctioned
+	// A5: every layer's required names must be present, checked root
 	// first. A sorted copy keeps the alphabetically-first report independent
 	// of the Catalog implementation.
 	for _, layer := range chain {
